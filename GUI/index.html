@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iNViSiKiT — The Invisible Drum Kit</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #e8001d;
+    --amber: #ff8c00;
+    --green: #00d26a;
+    --cyan: #00c8ff;
+    --white: #f0f0f0;
+    --mid: #7a7a8c;
+    --dark: #0a0a0f;
+    --darker: #050508;
+    --panel: #111118;
+    --border: #1e1e2e;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--darker);
+    color: var(--white);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.35;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    background: radial-gradient(ellipse 80% 60% at 50% 50%, #0d0d1a 0%, var(--darker) 100%);
+    overflow: hidden;
+    padding: 60px 20px;
+  }
+
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,200,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,200,255,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, black 30%, transparent 100%);
+  }
+
+  .hero-scanline {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+  }
+
+  .hero-glow {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(232,0,29,0.08) 0%, transparent 70%);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: pulse 4s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
+  }
+
+  .hero-eyebrow {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--red);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    position: relative;
+  }
+
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(80px, 15vw, 180px);
+    letter-spacing: -2px;
+    line-height: 0.9;
+    position: relative;
+    text-shadow: 0 0 80px rgba(232,0,29,0.3);
+  }
+
+  .hero-title span {
+    color: var(--red);
+  }
+
+  .hero-sub {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(20px, 4vw, 42px);
+    letter-spacing: 6px;
+    color: var(--mid);
+    margin-top: 12px;
+    text-transform: uppercase;
+    position: relative;
+  }
+
+  .hero-tagline {
+    font-size: 18px;
+    font-weight: 300;
+    color: rgba(240,240,240,0.6);
+    max-width: 560px;
+    margin: 30px auto 50px;
+    position: relative;
+    letter-spacing: 0.5px;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 50px;
+    justify-content: center;
+    flex-wrap: wrap;
+    position: relative;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 52px;
+    color: var(--cyan);
+    line-height: 1;
+    text-shadow: 0 0 20px rgba(0,200,255,0.5);
+  }
+
+  .stat-label {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--mid);
+    text-transform: uppercase;
+    font-family: 'Share Tech Mono', monospace;
+    margin-top: 4px;
+  }
+
+  .hero-badge {
+    position: absolute;
+    top: 40px;
+    right: 40px;
+    background: var(--red);
+    color: white;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    padding: 6px 14px;
+    text-transform: uppercase;
+  }
+
+  /* ── SECTION COMMONS ── */
+  section {
+    padding: 100px 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .section-divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border) 20%, var(--border) 80%, transparent);
+    margin: 0;
+  }
+
+  .section-full {
+    max-width: 100%;
+    padding: 0;
+  }
+
+  .section-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--red);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--border), transparent);
+    max-width: 200px;
+  }
+
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(42px, 6vw, 72px);
+    letter-spacing: 2px;
+    line-height: 1;
+    margin-bottom: 30px;
+  }
+
+  .section-title em {
+    color: var(--red);
+    font-style: normal;
+  }
+
+  .section-body {
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.75;
+    color: rgba(240,240,240,0.75);
+    max-width: 720px;
+  }
+
+  /* ── CONCEPT SECTION ── */
+  .concept-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    margin-top: 60px;
+    align-items: start;
+  }
+
+  @media (max-width: 768px) {
+    .concept-grid { grid-template-columns: 1fr; }
+  }
+
+  .concept-text p + p {
+    margin-top: 20px;
+  }
+
+  .origin-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--red);
+    padding: 36px;
+  }
+
+  .origin-card h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 2px;
+    color: var(--red);
+    margin-bottom: 16px;
+  }
+
+  .origin-card p {
+    font-size: 15px;
+    color: rgba(240,240,240,0.65);
+    line-height: 1.7;
+  }
+
+  .origin-card p + p {
+    margin-top: 14px;
+  }
+
+  .timeline {
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .timeline-item {
+    display: flex;
+    gap: 20px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .timeline-item:last-child {
+    border-bottom: none;
+  }
+
+  .timeline-year {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--cyan);
+    min-width: 42px;
+    padding-top: 2px;
+  }
+
+  .timeline-desc {
+    font-size: 14px;
+    color: rgba(240,240,240,0.65);
+    line-height: 1.5;
+  }
+
+  /* ── DIFFERENTIATOR ── */
+  .diff-bg {
+    background: var(--panel);
+    padding: 100px 40px;
+  }
+
+  .diff-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .comp-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 50px;
+    font-size: 14px;
+  }
+
+  .comp-table th {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 14px 20px;
+    text-align: left;
+    border-bottom: 2px solid var(--border);
+    color: var(--mid);
+  }
+
+  .comp-table th:first-child {
+    color: var(--white);
+  }
+
+  .comp-table td {
+    padding: 14px 20px;
+    border-bottom: 1px solid rgba(30,30,46,0.8);
+    color: rgba(240,240,240,0.65);
+    vertical-align: middle;
+  }
+
+  .comp-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .comp-table tr.invisikit td {
+    background: rgba(232,0,29,0.06);
+    border-bottom: 1px solid rgba(232,0,29,0.2);
+    color: var(--white);
+    font-weight: 600;
+  }
+
+  .comp-table tr.invisikit td:first-child {
+    color: var(--red);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 1px;
+  }
+
+  .check { color: var(--green); font-size: 16px; }
+  .cross { color: rgba(240,240,240,0.2); font-size: 16px; }
+  .partial { color: var(--amber); font-size: 16px; }
+
+  .diff-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-top: 60px;
+  }
+
+  .diff-card {
+    background: var(--darker);
+    border: 1px solid var(--border);
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s;
+  }
+
+  .diff-card:hover {
+    border-color: rgba(232,0,29,0.4);
+  }
+
+  .diff-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--red);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s;
+  }
+
+  .diff-card:hover::before {
+    transform: scaleX(1);
+  }
+
+  .diff-card-icon {
+    font-size: 32px;
+    margin-bottom: 18px;
+    display: block;
+  }
+
+  .diff-card h4 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 1px;
+    color: var(--cyan);
+    margin-bottom: 10px;
+  }
+
+  .diff-card p {
+    font-size: 14px;
+    color: rgba(240,240,240,0.6);
+    line-height: 1.6;
+  }
+
+  /* ── TECH SPECS ── */
+  .specs-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 50px;
+    margin-top: 60px;
+  }
+
+  @media (max-width: 768px) {
+    .specs-layout { grid-template-columns: 1fr; }
+  }
+
+  .spec-group {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 30px;
+  }
+
+  .spec-group h3 {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 3px;
+    color: var(--cyan);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .spec-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(30,30,46,0.6);
+    gap: 20px;
+  }
+
+  .spec-row:last-child {
+    border-bottom: none;
+  }
+
+  .spec-key {
+    font-size: 13px;
+    color: var(--mid);
+    font-family: 'Share Tech Mono', monospace;
+    flex-shrink: 0;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+  }
+
+  .spec-val {
+    font-size: 14px;
+    color: var(--white);
+    font-weight: 500;
+    text-align: right;
+    line-height: 1.4;
+  }
+
+  .spec-highlight {
+    color: var(--green);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+  }
+
+  /* ── SIGNAL FLOW ── */
+  .signal-flow {
+    background: var(--darker);
+    padding: 100px 40px;
+  }
+
+  .signal-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .flow-diagram {
+    margin-top: 60px;
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .flow-node {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 24px 20px;
+    text-align: center;
+    min-width: 140px;
+    flex: 1;
+    max-width: 200px;
+    position: relative;
+  }
+
+  .flow-node.primary {
+    border-color: var(--red);
+    background: rgba(232,0,29,0.07);
+  }
+
+  .flow-node.accent {
+    border-color: var(--cyan);
+    background: rgba(0,200,255,0.05);
+  }
+
+  .flow-arrow {
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    color: var(--mid);
+    font-size: 24px;
+  }
+
+  .flow-icon {
+    font-size: 24px;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .flow-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--mid);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .flow-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 1px;
+    color: var(--white);
+    line-height: 1.1;
+  }
+
+  .flow-detail {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--cyan);
+    margin-top: 6px;
+  }
+
+  /* ── PARAMETERS ── */
+  .params-section {
+    background: var(--panel);
+    padding: 100px 40px;
+  }
+
+  .params-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .params-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-top: 50px;
+  }
+
+  @media (max-width: 768px) {
+    .params-grid { grid-template-columns: 1fr; }
+  }
+
+  .param-group {
+    border: 1px solid var(--border);
+    padding: 28px;
+  }
+
+  .param-group-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    letter-spacing: 2px;
+    color: var(--red);
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(232,0,29,0.3);
+  }
+
+  .param-item {
+    padding: 10px 0;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    border-bottom: 1px solid rgba(30,30,46,0.5);
+  }
+
+  .param-item:last-child { border-bottom: none; }
+
+  .param-name {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--cyan);
+    min-width: 90px;
+    letter-spacing: 0.5px;
+    padding-top: 2px;
+  }
+
+  .param-range {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--amber);
+    min-width: 60px;
+    padding-top: 2px;
+  }
+
+  .param-desc {
+    font-size: 13px;
+    color: rgba(240,240,240,0.6);
+    line-height: 1.5;
+    flex: 1;
+  }
+
+  /* ── ROADMAP ── */
+  .roadmap {
+    padding: 100px 40px;
+    background: var(--darker);
+  }
+
+  .roadmap-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .roadmap-phases {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 2px;
+    margin-top: 60px;
+  }
+
+  .phase {
+    background: var(--panel);
+    padding: 32px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .phase::after {
+    content: attr(data-num);
+    position: absolute;
+    bottom: -20px;
+    right: 10px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 100px;
+    color: rgba(255,255,255,0.03);
+    line-height: 1;
+    user-select: none;
+  }
+
+  .phase.active {
+    background: rgba(232,0,29,0.08);
+    border-left: 3px solid var(--red);
+  }
+
+  .phase-num {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--red);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .phase-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    letter-spacing: 1px;
+    color: var(--white);
+    margin-bottom: 16px;
+    line-height: 1.1;
+  }
+
+  .phase-items {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .phase-items li {
+    font-size: 13px;
+    color: rgba(240,240,240,0.6);
+    padding-left: 16px;
+    position: relative;
+    line-height: 1.4;
+  }
+
+  .phase-items li::before {
+    content: '›';
+    position: absolute;
+    left: 0;
+    color: var(--red);
+    font-size: 16px;
+    line-height: 1;
+    top: 1px;
+  }
+
+  .phase-status {
+    display: inline-block;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    padding: 3px 8px;
+    text-transform: uppercase;
+    margin-top: 16px;
+  }
+
+  .phase-status.complete { background: rgba(0,210,106,0.15); color: var(--green); }
+  .phase-status.wip { background: rgba(232,0,29,0.15); color: var(--red); }
+  .phase-status.planned { background: rgba(122,122,140,0.15); color: var(--mid); }
+
+  /* ── PROMO ── */
+  .promo-bg {
+    background: var(--panel);
+    padding: 100px 40px;
+  }
+
+  .promo-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .promo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 30px;
+    margin-top: 50px;
+  }
+
+  @media (max-width: 900px) {
+    .promo-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media (max-width: 600px) {
+    .promo-grid { grid-template-columns: 1fr; }
+  }
+
+  .promo-card {
+    background: var(--darker);
+    border: 1px solid var(--border);
+    padding: 28px;
+  }
+
+  .promo-card h4 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 1px;
+    color: var(--amber);
+    margin-bottom: 10px;
+    margin-top: 12px;
+  }
+
+  .promo-card .promo-icon {
+    font-size: 28px;
+  }
+
+  .promo-card ul {
+    list-style: none;
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .promo-card ul li {
+    font-size: 13px;
+    color: rgba(240,240,240,0.6);
+    padding-left: 14px;
+    position: relative;
+    line-height: 1.5;
+  }
+
+  .promo-card ul li::before {
+    content: '—';
+    position: absolute;
+    left: 0;
+    color: rgba(240,240,240,0.2);
+  }
+
+  /* ── KICKSTARTER CTA ── */
+  .cta-section {
+    background: var(--darker);
+    padding: 120px 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cta-section::before {
+    content: 'iNViSiKiT';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(100px, 20vw, 260px);
+    letter-spacing: -10px;
+    color: rgba(255,255,255,0.02);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .cta-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--red);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .cta-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(36px, 6vw, 72px);
+    letter-spacing: 3px;
+    line-height: 1.05;
+    margin-bottom: 24px;
+    position: relative;
+  }
+
+  .cta-body {
+    font-size: 17px;
+    color: rgba(240,240,240,0.6);
+    max-width: 600px;
+    margin: 0 auto 50px;
+    line-height: 1.7;
+    position: relative;
+  }
+
+  .cta-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    position: relative;
+  }
+
+  .btn-primary {
+    background: var(--red);
+    color: white;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 3px;
+    padding: 18px 50px;
+    border: none;
+    cursor: pointer;
+    text-transform: uppercase;
+    text-decoration: none;
+    display: inline-block;
+    transition: background 0.2s, transform 0.2s;
+  }
+
+  .btn-primary:hover {
+    background: #ff1a33;
+    transform: translateY(-2px);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--white);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 3px;
+    padding: 18px 50px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    text-transform: uppercase;
+    text-decoration: none;
+    display: inline-block;
+    transition: border-color 0.2s, color 0.2s, transform 0.2s;
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    transform: translateY(-2px);
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--panel);
+    padding: 40px;
+    text-align: center;
+    border-top: 1px solid var(--border);
+  }
+
+  footer .footer-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 4px;
+    margin-bottom: 10px;
+  }
+
+  footer .footer-logo span { color: var(--red); }
+
+  footer p {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--mid);
+    letter-spacing: 1px;
+  }
+
+  /* ── UTILITY ── */
+  .tag {
+    display: inline-block;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    padding: 4px 10px;
+    border: 1px solid;
+    text-transform: uppercase;
+    margin-right: 6px;
+    margin-bottom: 6px;
+  }
+
+  .tag-red { border-color: var(--red); color: var(--red); }
+  .tag-cyan { border-color: var(--cyan); color: var(--cyan); }
+  .tag-green { border-color: var(--green); color: var(--green); }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 50px;
+    margin-top: 50px;
+  }
+
+  @media (max-width: 768px) {
+    .two-col { grid-template-columns: 1fr; }
+  }
+
+  .highlight-box {
+    background: rgba(0,200,255,0.05);
+    border: 1px solid rgba(0,200,255,0.2);
+    padding: 28px;
+    margin-top: 30px;
+  }
+
+  .highlight-box p {
+    font-size: 17px;
+    line-height: 1.7;
+    color: rgba(240,240,240,0.8);
+    font-style: italic;
+  }
+
+  .highlight-box cite {
+    display: block;
+    margin-top: 12px;
+    font-style: normal;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--cyan);
+    letter-spacing: 1px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     HERO
+═══════════════════════════════════════════════════════ -->
+<div class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-scanline"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-badge">Est. 2014 · Prototype Series</div>
+
+  <div class="hero-eyebrow">Wearable · Wireless · Expressive</div>
+  <h1 class="hero-title">i<span>N</span>Vi<span>S</span>i<span>K</span>i<span>T</span></h1>
+  <div class="hero-sub">The Invisible Drum Kit</div>
+  <p class="hero-tagline">A revolutionary wearable percussion system conceived by a drummer, for drummers — bringing the full vocabulary of acoustic drumming to any environment, without a kit in sight.</p>
+
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-num">&lt;3ms</div>
+      <div class="stat-label">Wireless Latency</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">20</div>
+      <div class="stat-label">Sensor Inputs</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">100%</div>
+      <div class="stat-label">Customisable</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">10yr</div>
+      <div class="stat-label">In Development</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     THE CONCEPT
+═══════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">01 — The Concept</div>
+  <h2 class="section-title">Born from <em>Frustration.</em><br>Built for <em>Expression.</em></h2>
+
+  <div class="concept-grid">
+    <div class="concept-text">
+      <p class="section-body">After 40 years behind the kit and a decade of teaching, the shortcomings of every "wearable drum" and "MIDI pad" solution became impossible to ignore. Finger drumming pads demand you un-learn everything about being a drummer. They're built for producers, not percussionists.</p>
+
+      <p class="section-body" style="margin-top:20px;">The iNViSiKiT was conceived to answer a single question: <em style="color:var(--cyan);">what if the full four-limb vocabulary of acoustic drumming could travel with you, anywhere, invisibly?</em></p>
+
+      <p class="section-body" style="margin-top:20px;">Custom wearable pad arrays mount to legs and feet. A custom 2.4GHz wireless protocol delivers sub-3ms latency MIDI messaging. Every parameter on every sensor is editable in real-time. The result is a performance instrument that plays like a real kit — because it was designed by someone who plays a real kit.</p>
+
+      <div style="margin-top:30px;">
+        <span class="tag tag-red">Wearable</span>
+        <span class="tag tag-cyan">Wireless MIDI</span>
+        <span class="tag tag-green">FSR Sensors</span>
+        <span class="tag tag-red">NRF52840</span>
+        <span class="tag tag-cyan">4-Limb Play</span>
+        <span class="tag tag-green">Custom Protocol</span>
+      </div>
+    </div>
+
+    <div class="origin-card">
+      <h3>Origin Story</h3>
+      <p>In 2014, the iNViSiKiT was first conceived — and within 24 hours, a rough proof-of-concept was playing MIDI notes from homemade piezo sensors attached to an Arduino. <a href="https://youtu.be/mgu1dIrN4BM" style="color:var(--cyan);">That first prototype video</a> launched ten years of relentless development.</p>
+      <p>Dozens of custom PCBs have been etched by hand. Countless sensor configurations explored. Notebooks filled with circuit diagrams, parameter tables, and system architectures.</p>
+
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-year">2014</div>
+          <div class="timeline-desc">Concept conceived. Piezo + Arduino proof-of-concept tested within 24 hours.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-year">2015</div>
+          <div class="timeline-desc">First formal design docs. iNViSiKiT v1.0 parameter system defined.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-year">2016</div>
+          <div class="timeline-desc">Arduino Pro Mini / Pro Micro prototypes. NRF24L01+ wireless integration. 4051 MUX sensor matrix.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-year">2018</div>
+          <div class="timeline-desc">Full firmware v1.0 code archive. ProMicro + ST7735 TFT display. Conductive butynol rubber pad fabrication.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-year">2024–</div>
+          <div class="timeline-desc">NRF52840 platform. Custom wireless protocol. GUI redesign. Pre-production specification.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ═══════════════════════════════════════════════════════
+     WHAT MAKES IT DIFFERENT
+═══════════════════════════════════════════════════════ -->
+<div class="diff-bg">
+<div class="diff-inner">
+  <div class="section-label">02 — Competitive Landscape</div>
+  <h2 class="section-title">Every Alternative<br><em>Falls Short.</em></h2>
+
+  <p class="section-body">The market is littered with solutions that attempt to solve wearable/portable drumming — but none are built by drummers, for drummers. Here's why iNViSiKiT stands alone:</p>
+
+  <table class="comp-table">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>4-Limb Play</th>
+        <th>Wearable</th>
+        <th>Real Velocity</th>
+        <th>Wireless</th>
+        <th>Custom Params</th>
+        <th>Works Any MIDI</th>
+        <th>Natural Feel</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="invisikit">
+        <td>iNViSiKiT</td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>Akai MPC / Finger Pads</td>
+        <td><span class="cross">✗</span></td>
+        <td><span class="cross">✗</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="partial">△</span></td>
+        <td><span class="partial">△</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="cross">✗</span></td>
+      </tr>
+      <tr>
+        <td>Drum Pants</td>
+        <td><span class="partial">△</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="partial">△</span></td>
+        <td><span class="partial">△</span></td>
+        <td><span class="cross">✗</span></td>
+        <td><span class="partial">△</span></td>
+        <td><span class="partial">△</span></td>
+      </tr>
+      <tr>
+        <td>Aero Drum</td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="partial">△</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="cross">✗</span></td>
+        <td><span class="partial">△</span></td>
+        <td><span class="partial">△</span></td>
+      </tr>
+      <tr>
+        <td>Roland / Alesis E-Kit</td>
+        <td><span class="check">✓</span></td>
+        <td><span class="cross">✗</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="cross">✗</span></td>
+        <td><span class="partial">△</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="partial">△</span></td>
+      </tr>
+      <tr>
+        <td>Keith McMillen QuNeo</td>
+        <td><span class="cross">✗</span></td>
+        <td><span class="cross">✗</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="cross">✗</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="cross">✗</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="diff-cards">
+    <div class="diff-card">
+      <span class="diff-card-icon">🥁</span>
+      <h4>Four-Limb Performance</h4>
+      <p>The only wearable that mirrors real drumming — 8 pads per leg, 2 pedals per foot, user-assignable buttons. Play fills, grooves, and kicks exactly as you would behind a real kit.</p>
+    </div>
+    <div class="diff-card">
+      <span class="diff-card-icon">⚡</span>
+      <h4>Ultra-Low Latency</h4>
+      <p>Custom 2.4GHz wireless protocol achieves sub-3ms MIDI messaging — imperceptible to human performance. Not Bluetooth. Not Wi-Fi. A bespoke protocol built for this purpose.</p>
+    </div>
+    <div class="diff-card">
+      <span class="diff-card-icon">🎛️</span>
+      <h4>Per-Pad Customisation</h4>
+      <p>Every sensor has its own Threshold, Ceiling, Zero Offset, Scans, Mask, MIDI Note, Velocity Curve, Min/Max range, and Gain settings. Dial every pad for your personal dynamic.</p>
+    </div>
+    <div class="diff-card">
+      <span class="diff-card-icon">🔌</span>
+      <h4>Universal MIDI Compatibility</h4>
+      <p>Class-compliant MIDI over USB and wireless. Works with any DAW, drum module, or MIDI device — no proprietary software or subscriptions required.</p>
+    </div>
+    <div class="diff-card">
+      <span class="diff-card-icon">🧱</span>
+      <h4>Custom FSR Sensors</h4>
+      <p>Hand-fabricated force-sensitive pads from conductive butynol rubber — not off-the-shelf components. Engineered for natural drum-stick response and durability.</p>
+    </div>
+    <div class="diff-card">
+      <span class="diff-card-icon">👻</span>
+      <h4>Truly Invisible</h4>
+      <p>Wears under or over clothing. No camera setup required (vs Aero Drum). No awkward finger positioning (vs pad controllers). Just play.</p>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     TECHNICAL SPECIFICATION
+═══════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">03 — Technical Specification</div>
+  <h2 class="section-title">Pre-Production<br><em>Specification</em></h2>
+
+  <div class="specs-layout">
+    <div class="spec-group">
+      <h3>Core Platform</h3>
+      <div class="spec-row">
+        <span class="spec-key">Main MCU</span>
+        <span class="spec-val">Nordic Semi nRF52840<br><span class="spec-highlight">ARM Cortex-M4 @ 64 MHz</span></span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">Radio</span>
+        <span class="spec-val">2.4 GHz Custom Tx/Rx Protocol<br><span class="spec-highlight">&lt;3ms End-to-End Latency</span></span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">Development</span>
+        <span class="spec-val">Arduino Framework<br>Adafruit nRF52 BSP</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">NFC Pins</span>
+        <span class="spec-val">P0.09 / P0.10 (NFC1/NFC2)</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">ADC Resolution</span>
+        <span class="spec-val"><span class="spec-highlight">12-bit</span></span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">LF Clock</span>
+        <span class="spec-val">32kHz External Crystal (LFXO)</span>
+      </div>
+    </div>
+
+    <div class="spec-group">
+      <h3>Sensor System</h3>
+      <div class="spec-row">
+        <span class="spec-key">Pad Count</span>
+        <span class="spec-val"><span class="spec-highlight">16 full-size pads</span><br>8 per leg array</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">Pedal Sensors</span>
+        <span class="spec-val">4 total (2 per foot)<br>Hi-Hat + Kick per side</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">Buttons</span>
+        <span class="spec-val">User-assignable ×10 (5 per leg)</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">Sensor Type</span>
+        <span class="spec-val">FSR — Conductive Butynol Rubber<br>1mm thick, custom fabricated</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">Pad Readout</span>
+        <span class="spec-val">2×4 Matrix (4 drive rows,<br>2 read columns per 8-pad array)</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">Actuator Material</span>
+        <span class="spec-val">MoldStar 20T Silicone<br>20A Shore Hardness</span>
+      </div>
+    </div>
+
+    <div class="spec-group">
+      <h3>Interfaces</h3>
+      <div class="spec-row">
+        <span class="spec-key">MIDI Output</span>
+        <span class="spec-val">USB MIDI (class-compliant)<br>+ 2.4GHz Wireless MIDI</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">SPI Bus 1</span>
+        <span class="spec-val">SCK P0.17 / MISO P0.20<br>MOSI P0.22 / CS P0.24</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">SPI Bus 2</span>
+        <span class="spec-val">SCK P1.01 / MISO P1.02<br>MOSI P1.07</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">I²C Bus 1</span>
+        <span class="spec-val">SDA P1.00 / SCL P0.11</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">I²C Bus 2</span>
+        <span class="spec-val">SDA P1.13 / SCL P1.15</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">UART</span>
+        <span class="spec-val">TX P0.06 / RX P0.08</span>
+      </div>
+    </div>
+
+    <div class="spec-group">
+      <h3>Power &amp; Display</h3>
+      <div class="spec-row">
+        <span class="spec-key">3V3 Rail</span>
+        <span class="spec-val">EXT_VCC on P0.13<br>(Active HIGH enable)</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">Battery Read</span>
+        <span class="spec-val">analogReadVDDHDIV5()<br>(VDDH ÷ 5)</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">Analog Inputs</span>
+        <span class="spec-val">A0–A2 (P0.02 / P0.29 / P0.31)</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">LED System</span>
+        <span class="spec-val">WS2812b RGB per pad<br>FastLED library</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">Display (legacy)</span>
+        <span class="spec-val">128×128 TFT SPI (ST7735)</span>
+      </div>
+      <div class="spec-row">
+        <span class="spec-key">Display (current)</span>
+        <span class="spec-val">GUI via web browser /<br>dedicated app interface</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SIGNAL FLOW
+═══════════════════════════════════════════════════════ -->
+<div class="signal-flow">
+<div class="signal-inner">
+  <div class="section-label">04 — Signal Flow</div>
+  <h2 class="section-title">From Strike to<br><em>Sound in &lt;3ms</em></h2>
+
+  <div class="flow-diagram">
+    <div class="flow-node primary">
+      <span class="flow-icon">🖐️</span>
+      <div class="flow-title">Input</div>
+      <div class="flow-name">FSR Pad Strike</div>
+      <div class="flow-detail">Butynol Rubber<br>Force Sensor</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">
+      <span class="flow-icon">📊</span>
+      <div class="flow-title">Sensor</div>
+      <div class="flow-name">ADC Read<br>12-bit</div>
+      <div class="flow-detail">2×4 Matrix Scan<br>Drive → Read</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">
+      <span class="flow-icon">⚙️</span>
+      <div class="flow-title">Processing</div>
+      <div class="flow-name">Trigger<br>Algorithm</div>
+      <div class="flow-detail">Zero / Thresh /<br>Scans / Mask</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">
+      <span class="flow-icon">🎯</span>
+      <div class="flow-title">Mapping</div>
+      <div class="flow-name">Velocity<br>Curve</div>
+      <div class="flow-detail">Min/Max/Steps/<br>Gain / Center</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node accent">
+      <span class="flow-icon">📡</span>
+      <div class="flow-title">Transmit</div>
+      <div class="flow-name">NRF52840<br>TX Module</div>
+      <div class="flow-detail">Custom 2.4GHz<br>Protocol</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node accent">
+      <span class="flow-icon">📥</span>
+      <div class="flow-title">Receive</div>
+      <div class="flow-name">NRF52840<br>RX Module</div>
+      <div class="flow-detail">&lt;3ms Latency</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node primary">
+      <span class="flow-icon">🎵</span>
+      <div class="flow-title">Output</div>
+      <div class="flow-name">MIDI Note<br>On/Off</div>
+      <div class="flow-detail">USB MIDI /<br>5-Pin DIN</div>
+    </div>
+  </div>
+
+  <div class="highlight-box" style="margin-top:50px;">
+    <p>"The system achieves end-to-end latency under 3 milliseconds — well below the 10ms threshold considered perceptible during live performance. This is achieved not through off-the-shelf Bluetooth or USB polling, but through a bespoke 2.4GHz transmission protocol engineered specifically for the iNViSiKiT's timing requirements."</p>
+    <cite>— Technical Design Notes, iNViSiKiT Development Archive</cite>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     PARAMETERS DEEP DIVE
+═══════════════════════════════════════════════════════ -->
+<div class="params-section">
+<div class="params-inner">
+  <div class="section-label">05 — Firmware Parameters</div>
+  <h2 class="section-title">Total Control.<br><em>Every Pad.</em></h2>
+
+  <p class="section-body">Each of the 20 sensor inputs carries its own independent parameter set. Every parameter is accessible in real-time through the GUI — no power-cycling, no preset banks to navigate. Just dial it in, play.</p>
+
+  <div class="params-grid">
+    <div class="param-group">
+      <div class="param-group-title">TRIGGER Parameters</div>
+      <div class="param-item">
+        <span class="param-name">ZERO</span>
+        <span class="param-range">0–100</span>
+        <span class="param-desc">Zero offset — calibrates the resting baseline of each pad to eliminate false triggers from ambient pressure or sensor drift.</span>
+      </div>
+      <div class="param-item">
+        <span class="param-name">CEILING</span>
+        <span class="param-range">1–100</span>
+        <span class="param-desc">Maximum signal ceiling — constrains the peak reading, mapping full velocity to a realistic strike force.</span>
+      </div>
+      <div class="param-item">
+        <span class="param-name">THRESHOLD</span>
+        <span class="param-range">1–100</span>
+        <span class="param-desc">Note-On threshold — the minimum signal level required to trigger a MIDI event. Prevents ghost notes.</span>
+      </div>
+      <div class="param-item">
+        <span class="param-name">RELEASE</span>
+        <span class="param-range">1–100</span>
+        <span class="param-desc">Note-Off threshold — the level below which the note is considered released, for controlled sostenuto behaviour.</span>
+      </div>
+      <div class="param-item">
+        <span class="param-name">SCANS</span>
+        <span class="param-range">1–100</span>
+        <span class="param-desc">Peak-scan count — number of ADC readings taken after initial trigger to accurately determine strike velocity maximum.</span>
+      </div>
+      <div class="param-item">
+        <span class="param-name">MASK</span>
+        <span class="param-range">1–100</span>
+        <span class="param-desc">Mask time in cycles — blocks retriggering after a valid hit to prevent double-trigger artefacts from pad resonance.</span>
+      </div>
+    </div>
+
+    <div class="param-group">
+      <div class="param-group-title">MIDI / DYNAMICS Parameters</div>
+      <div class="param-item">
+        <span class="param-name">MIDI NOTE</span>
+        <span class="param-range">35–81</span>
+        <span class="param-desc">GM drum map note assignment — independently configurable per pad to map any MIDI drum voice.</span>
+      </div>
+      <div class="param-item">
+        <span class="param-name">MAX VOL</span>
+        <span class="param-range">10–127</span>
+        <span class="param-desc">Maximum MIDI velocity ceiling — sets the loudest output velocity mapped to a full-force strike.</span>
+      </div>
+      <div class="param-item">
+        <span class="param-name">MIN VOL</span>
+        <span class="param-range">10–127</span>
+        <span class="param-desc">Minimum MIDI velocity floor — ghost notes and light taps output at least this velocity value.</span>
+      </div>
+      <div class="param-item">
+        <span class="param-name">STEPS</span>
+        <span class="param-range">1–127</span>
+        <span class="param-desc">Velocity resolution steps — the number of distinct dynamic levels mapped between minimum and maximum output.</span>
+      </div>
+      <div class="param-item">
+        <span class="param-name">CURVE</span>
+        <span class="param-range">-3 to +3</span>
+        <span class="param-desc">Velocity curve shape — negative values produce a more sensitive, expressive response; positive values linearise or compress dynamics.</span>
+      </div>
+      <div class="param-item">
+        <span class="param-name">GAIN</span>
+        <span class="param-range">-4 to +4</span>
+        <span class="param-desc">Post-curve gain trim — fine-tune output level for individual pads to balance the kit dynamically without mechanical adjustment.</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     DEVELOPMENT ROADMAP
+═══════════════════════════════════════════════════════ -->
+<div class="roadmap">
+<div class="roadmap-inner">
+  <div class="section-label">06 — Development Roadmap</div>
+  <h2 class="section-title">From Bench<br><em>to Market</em></h2>
+
+  <div class="roadmap-phases">
+    <div class="phase" data-num="1">
+      <div class="phase-num">Phase 01</div>
+      <div class="phase-title">Foundation<br>Complete</div>
+      <ul class="phase-items">
+        <li>Core sensor technology validated</li>
+        <li>Custom wireless protocol operational</li>
+        <li>Firmware parameter engine built</li>
+        <li>GUI interface designed</li>
+        <li>Conductive butynol pad fabrication process established</li>
+      </ul>
+      <span class="phase-status complete">Complete</span>
+    </div>
+
+    <div class="phase active" data-num="2">
+      <div class="phase-num">Phase 02 — Current</div>
+      <div class="phase-title">NRF52840<br>Integration</div>
+      <ul class="phase-items">
+        <li>Migrate to NRF52840 platform</li>
+        <li>Custom variant.h / variant.cpp board definition</li>
+        <li>Dual SPI + Dual I²C support</li>
+        <li>Refine &lt;3ms wireless latency</li>
+        <li>GUI — web-based control interface</li>
+      </ul>
+      <span class="phase-status wip">In Progress</span>
+    </div>
+
+    <div class="phase" data-num="3">
+      <div class="phase-num">Phase 03</div>
+      <div class="phase-title">Beta Prototype<br>Production</div>
+      <ul class="phase-items">
+        <li>Finalise pad strap/attachment system</li>
+        <li>Custom PCB design (SMD production run)</li>
+        <li>Injection-moulded silicone pad prototype</li>
+        <li>Enclosure / form-factor design</li>
+        <li>Battery management system</li>
+      </ul>
+      <span class="phase-status planned">Planned</span>
+    </div>
+
+    <div class="phase" data-num="4">
+      <div class="phase-num">Phase 04</div>
+      <div class="phase-title">Beta Tester<br>Program</div>
+      <ul class="phase-items">
+        <li>Recruit 10–20 beta drummers</li>
+        <li>Social media / online drum communities</li>
+        <li>Influencer outreach — YouTube / TikTok</li>
+        <li>Collect performance + reliability data</li>
+        <li>Iterate on feedback</li>
+      </ul>
+      <span class="phase-status planned">Planned</span>
+    </div>
+
+    <div class="phase" data-num="5">
+      <div class="phase-num">Phase 05</div>
+      <div class="phase-title">Kickstarter<br>Launch</div>
+      <ul class="phase-items">
+        <li>Campaign video production</li>
+        <li>Reward tier design</li>
+        <li>Manufacturing partner secured</li>
+        <li>IP / patent filing</li>
+        <li>Press outreach — drumming media</li>
+      </ul>
+      <span class="phase-status planned">Planned</span>
+    </div>
+
+    <div class="phase" data-num="6">
+      <div class="phase-num">Phase 06</div>
+      <div class="phase-title">Production<br>&amp; Retail</div>
+      <ul class="phase-items">
+        <li>Fulfilment of Kickstarter rewards</li>
+        <li>Amazon / Sweetwater / Reverb listings</li>
+        <li>App store companion app</li>
+        <li>Version 2 roadmap</li>
+        <li>Global distribution</li>
+      </ul>
+      <span class="phase-status planned">Planned</span>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     PROMOTIONAL AVENUES
+═══════════════════════════════════════════════════════ -->
+<div class="promo-bg">
+<div class="promo-inner">
+  <div class="section-label">07 — Promotional Avenues</div>
+  <h2 class="section-title">Reaching the<br><em>Global Drum Community</em></h2>
+
+  <div class="promo-grid">
+    <div class="promo-card">
+      <div class="promo-icon">📹</div>
+      <h4>Content Creators</h4>
+      <ul>
+        <li>YouTube drum channels (Drumeo, Drumming Review)</li>
+        <li>TikTok drumming community (#DrumTok)</li>
+        <li>Instagram Reels — visual impact of wearable</li>
+        <li>Collab with known session/touring drummers</li>
+      </ul>
+    </div>
+    <div class="promo-card">
+      <div class="promo-icon">🥁</div>
+      <h4>Drum Community</h4>
+      <ul>
+        <li>Reddit — r/drums, r/WeAreTheMusicMakers</li>
+        <li>Drummerworld forum presence</li>
+        <li>PASIC / PAS drum conventions</li>
+        <li>Drum educators and school programs</li>
+      </ul>
+    </div>
+    <div class="promo-card">
+      <div class="promo-icon">🎮</div>
+      <h4>Music Tech</h4>
+      <ul>
+        <li>NAMM show demo / showcase</li>
+        <li>SonicState, CDM, MusicRadar press</li>
+        <li>ProductHunt launch</li>
+        <li>Audiophile / gear review blogs</li>
+      </ul>
+    </div>
+    <div class="promo-card">
+      <div class="promo-icon">💰</div>
+      <h4>Crowdfunding</h4>
+      <ul>
+        <li>Kickstarter — target drum + music tech audience</li>
+        <li>Indiegogo for global reach</li>
+        <li>Early-bird pricing strategy</li>
+        <li>Stretch goal features (companion app, accessories)</li>
+      </ul>
+    </div>
+    <div class="promo-card">
+      <div class="promo-icon">🎓</div>
+      <h4>Education Market</h4>
+      <ul>
+        <li>Music schools — silent practice solution</li>
+        <li>Apartment/hotel room playing</li>
+        <li>Disability access / adaptive drumming</li>
+        <li>Physical therapy / rhythm programs</li>
+      </ul>
+    </div>
+    <div class="promo-card">
+      <div class="promo-icon">🌐</div>
+      <h4>Digital Presence</h4>
+      <ul>
+        <li>Official website with live demo video</li>
+        <li>Discord community server</li>
+        <li>Newsletter / email waitlist</li>
+        <li>Open-source community elements (firmware)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     CTA
+═══════════════════════════════════════════════════════ -->
+<div class="cta-section">
+  <div class="cta-label">The Next Step</div>
+  <h2 class="cta-title">From Workbench<br>to the World Stage</h2>
+  <p class="cta-body">Ten years of development, dozens of prototypes, and a concept that has never been done right — iNViSiKiT is ready to be heard. The technology works. The platform is proven. The audience is waiting.</p>
+
+  <div class="cta-buttons">
+    <a href="#" class="btn-primary">Begin Beta Program</a>
+    <a href="#" class="btn-secondary">Technical Documentation</a>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     FOOTER
+═══════════════════════════════════════════════════════ -->
+<footer>
+  <div class="footer-logo">i<span>N</span>Vi<span>S</span>i<span>K</span>i<span>T</span></div>
+  <p>Designed &amp; Developed by Mike Clarkin · Conceived 2014 · Prototype Series 2024</p>
+  <p style="margin-top:6px;">The Invisible Drum Kit · Custom 2.4GHz MIDI · NRF52840 Platform</p>
+</footer>
+
+</body>
+</html>
